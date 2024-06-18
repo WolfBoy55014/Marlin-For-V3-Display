@@ -56,9 +56,7 @@
   #undef TEMP_SENSOR_7
   #undef SINGLENOZZLE
   #undef SWITCHING_EXTRUDER
-  #undef MECHANICAL_SWITCHING_EXTRUDER
   #undef SWITCHING_NOZZLE
-  #undef MECHANICAL_SWITCHING_NOZZLE
   #undef MIXING_EXTRUDER
   #undef HOTEND_IDLE_TIMEOUT
   #undef DISABLE_E
@@ -72,53 +70,43 @@
 #define E_TERN_(N)  TERN_(HAS_MULTI_EXTRUDER, N)
 #define E_TERN0(N)  TERN0(HAS_MULTI_EXTRUDER, N)
 
-#if ANY(SWITCHING_EXTRUDER, MECHANICAL_SWITCHING_EXTRUDER)
-  #define HAS_SWITCHING_EXTRUDER 1
-#endif
-#if ANY(SWITCHING_NOZZLE, MECHANICAL_SWITCHING_NOZZLE)
-  #define HAS_SWITCHING_NOZZLE 1
-#endif
-
 /**
  *  Multi-Material-Unit supported models
  */
+#define PRUSA_MMU1             1
+#define PRUSA_MMU2             2
+#define PRUSA_MMU2S            3
+#define EXTENDABLE_EMU_MMU2   12
+#define EXTENDABLE_EMU_MMU2S  13
+
 #ifdef MMU_MODEL
   #define HAS_MMU 1
   #define SINGLENOZZLE
-
-  #define _PRUSA_MMU1             1
-  #define _PRUSA_MMU2             2
-  #define _PRUSA_MMU2S            3
-  #define _EXTENDABLE_EMU_MMU2   12
-  #define _EXTENDABLE_EMU_MMU2S  13
-  #define _MMU CAT(_,MMU_MODEL)
-
-  #if _MMU == _PRUSA_MMU1
+  #if MMU_MODEL == PRUSA_MMU1
     #define HAS_PRUSA_MMU1 1
-  #elif _MMU % 10 == _PRUSA_MMU2
+  #elif MMU_MODEL % 10 == PRUSA_MMU2
     #define HAS_PRUSA_MMU2 1
-  #elif _MMU % 10 == _PRUSA_MMU2S
+  #elif MMU_MODEL % 10 == PRUSA_MMU2S
     #define HAS_PRUSA_MMU2 1
     #define HAS_PRUSA_MMU2S 1
   #endif
-  #if _MMU == _EXTENDABLE_EMU_MMU2 || _MMU == _EXTENDABLE_EMU_MMU2S
+  #if MMU_MODEL >= EXTENDABLE_EMU_MMU2
     #define HAS_EXTENDABLE_MMU 1
   #endif
-
-  #undef _MMU
-  #undef _PRUSA_MMU1
-  #undef _PRUSA_MMU2
-  #undef _PRUSA_MMU2S
-  #undef _EXTENDABLE_EMU_MMU2
-  #undef _EXTENDABLE_EMU_MMU2S
 #endif
+
+#undef PRUSA_MMU1
+#undef PRUSA_MMU2
+#undef PRUSA_MMU2S
+#undef EXTENDABLE_EMU_MMU2
+#undef EXTENDABLE_EMU_MMU2S
 
 #if ENABLED(E_DUAL_STEPPER_DRIVERS) // E0/E1 steppers act in tandem as E0
 
   #define E_STEPPERS      2
   #define E_MANUAL        1
 
-#elif HAS_SWITCHING_EXTRUDER        // One stepper for every two EXTRUDERS
+#elif ENABLED(SWITCHING_EXTRUDER)   // One stepper for every two EXTRUDERS
 
   #if EXTRUDERS > 4
     #define E_STEPPERS    3
@@ -135,9 +123,6 @@
   #if MIXING_STEPPERS == 2
     #define HAS_DUAL_MIXING 1
   #endif
-  #ifndef MIXING_VIRTUAL_TOOLS
-    #define MIXING_VIRTUAL_TOOLS 1
-  #endif
 
 #elif ENABLED(SWITCHING_TOOLHEAD)   // Toolchanger
 
@@ -151,6 +136,11 @@
 
 #endif
 
+// No inactive extruders with SWITCHING_NOZZLE or Průša MMU1
+#if ANY(SWITCHING_NOZZLE, HAS_PRUSA_MMU1)
+  #undef DISABLE_OTHER_EXTRUDERS
+#endif
+
 // Default E steppers / manual motion is one per extruder
 #ifndef E_STEPPERS
   #define E_STEPPERS EXTRUDERS
@@ -162,7 +152,7 @@
 // Number of hotends...
 #if ANY(SINGLENOZZLE, MIXING_EXTRUDER)                // Only one for singlenozzle or mixing extruder
   #define HOTENDS 1
-#elif HAS_SWITCHING_EXTRUDER && !HAS_SWITCHING_NOZZLE // One for each pair of abstract "extruders"
+#elif ENABLED(SWITCHING_EXTRUDER) && DISABLED(SWITCHING_NOZZLE) // One for each pair of abstract "extruders"
   #define HOTENDS E_STEPPERS
 #elif TEMP_SENSOR_0
   #define HOTENDS EXTRUDERS                           // One per extruder if at least one heater exists
@@ -293,11 +283,10 @@
 #endif
 
 #if !HAS_X_AXIS
-  #undef AVOID_OBSTACLES
   #undef ENDSTOPPULLUP_XMIN
   #undef ENDSTOPPULLUP_XMAX
-  #undef X_MIN_ENDSTOP_HIT_STATE
-  #undef X_MAX_ENDSTOP_HIT_STATE
+  #undef X_MIN_ENDSTOP_INVERTING
+  #undef X_MAX_ENDSTOP_INVERTING
   #undef X2_DRIVER_TYPE
   #undef X_ENABLE_ON
   #undef DISABLE_X
@@ -311,11 +300,10 @@
 #endif
 
 #if !HAS_Y_AXIS
-  #undef AVOID_OBSTACLES
   #undef ENDSTOPPULLUP_YMIN
   #undef ENDSTOPPULLUP_YMAX
-  #undef Y_MIN_ENDSTOP_HIT_STATE
-  #undef Y_MAX_ENDSTOP_HIT_STATE
+  #undef Y_MIN_ENDSTOP_INVERTING
+  #undef Y_MAX_ENDSTOP_INVERTING
   #undef Y2_DRIVER_TYPE
   #undef Y_ENABLE_ON
   #undef DISABLE_Y
@@ -341,8 +329,8 @@
 #else
   #undef ENDSTOPPULLUP_ZMIN
   #undef ENDSTOPPULLUP_ZMAX
-  #undef Z_MIN_ENDSTOP_HIT_STATE
-  #undef Z_MAX_ENDSTOP_HIT_STATE
+  #undef Z_MIN_ENDSTOP_INVERTING
+  #undef Z_MAX_ENDSTOP_INVERTING
   #undef Z2_DRIVER_TYPE
   #undef Z3_DRIVER_TYPE
   #undef Z4_DRIVER_TYPE
@@ -361,8 +349,8 @@
 #if !HAS_I_AXIS
   #undef ENDSTOPPULLUP_IMIN
   #undef ENDSTOPPULLUP_IMAX
-  #undef I_MIN_ENDSTOP_HIT_STATE
-  #undef I_MAX_ENDSTOP_HIT_STATE
+  #undef I_MIN_ENDSTOP_INVERTING
+  #undef I_MAX_ENDSTOP_INVERTING
   #undef I_ENABLE_ON
   #undef DISABLE_I
   #undef INVERT_I_DIR
@@ -377,8 +365,8 @@
 #if !HAS_J_AXIS
   #undef ENDSTOPPULLUP_JMIN
   #undef ENDSTOPPULLUP_JMAX
-  #undef J_MIN_ENDSTOP_HIT_STATE
-  #undef J_MAX_ENDSTOP_HIT_STATE
+  #undef J_MIN_ENDSTOP_INVERTING
+  #undef J_MAX_ENDSTOP_INVERTING
   #undef J_ENABLE_ON
   #undef DISABLE_J
   #undef INVERT_J_DIR
@@ -393,8 +381,8 @@
 #if !HAS_K_AXIS
   #undef ENDSTOPPULLUP_KMIN
   #undef ENDSTOPPULLUP_KMAX
-  #undef K_MIN_ENDSTOP_HIT_STATE
-  #undef K_MAX_ENDSTOP_HIT_STATE
+  #undef K_MIN_ENDSTOP_INVERTING
+  #undef K_MAX_ENDSTOP_INVERTING
   #undef K_ENABLE_ON
   #undef DISABLE_K
   #undef INVERT_K_DIR
@@ -409,8 +397,8 @@
 #if !HAS_U_AXIS
   #undef ENDSTOPPULLUP_UMIN
   #undef ENDSTOPPULLUP_UMAX
-  #undef U_MIN_ENDSTOP_HIT_STATE
-  #undef U_MAX_ENDSTOP_HIT_STATE
+  #undef U_MIN_ENDSTOP_INVERTING
+  #undef U_MAX_ENDSTOP_INVERTING
   #undef U_ENABLE_ON
   #undef DISABLE_U
   #undef INVERT_U_DIR
@@ -425,8 +413,8 @@
 #if !HAS_V_AXIS
   #undef ENDSTOPPULLUP_VMIN
   #undef ENDSTOPPULLUP_VMAX
-  #undef V_MIN_ENDSTOP_HIT_STATE
-  #undef V_MAX_ENDSTOP_HIT_STATE
+  #undef V_MIN_ENDSTOP_INVERTING
+  #undef V_MAX_ENDSTOP_INVERTING
   #undef V_ENABLE_ON
   #undef DISABLE_V
   #undef INVERT_V_DIR
@@ -441,8 +429,8 @@
 #if !HAS_W_AXIS
   #undef ENDSTOPPULLUP_WMIN
   #undef ENDSTOPPULLUP_WMAX
-  #undef W_MIN_ENDSTOP_HIT_STATE
-  #undef W_MAX_ENDSTOP_HIT_STATE
+  #undef W_MIN_ENDSTOP_INVERTING
+  #undef W_MAX_ENDSTOP_INVERTING
   #undef W_ENABLE_ON
   #undef DISABLE_W
   #undef INVERT_W_DIR
@@ -505,10 +493,6 @@
   #define ROTATIONAL_AXES 1
 #else
   #define ROTATIONAL_AXES 0
-#endif
-
-#if ROTATIONAL_AXES
-  #define HAS_ROTATIONAL_AXES 1
 #endif
 
 /**
@@ -579,26 +563,9 @@
   #define MKS_MINI_12864
 #endif
 
-// MKS_MINI_12864_V3 , BTT_MINI_12864 and BEEZ_MINI_12864 are nearly identical to FYSETC_MINI_12864_2_1
-#if ANY(MKS_MINI_12864_V3, BTT_MINI_12864, BEEZ_MINI_12864)
+// MKS_MINI_12864_V3 and BTT_MINI_12864 have identical pinouts to FYSETC_MINI_12864_2_1
+#if ANY(MKS_MINI_12864_V3, BTT_MINI_12864)
   #define FYSETC_MINI_12864_2_1
-#endif
-
-// Old settings are now conditional on DGUS_LCD_UI
-#if DGUS_UI_IS(ORIGIN)
-  #define DGUS_LCD_UI_ORIGIN 1
-#elif DGUS_UI_IS(FYSETC)
-  #define DGUS_LCD_UI_FYSETC 1
-#elif DGUS_UI_IS(HIPRECY)
-  #define DGUS_LCD_UI_HIPRECY 1
-#elif DGUS_UI_IS(MKS)
-  #define DGUS_LCD_UI_MKS 1
-#elif DGUS_UI_IS(RELOADED)
-  #define DGUS_LCD_UI_RELOADED 1
-#elif DGUS_UI_IS(IA_CREALITY)
-  #define DGUS_LCD_UI_IA_CREALITY 1
-#elif DGUS_UI_IS(E3S1PRO)
-  #define DGUS_LCD_UI_E3S1PRO 1
 #endif
 
 /**
@@ -788,12 +755,11 @@
 #elif ENABLED(CR10_STOCKDISPLAY)
 
   #define IS_RRD_FG_SC 1
-  #define NO_LCD_SDCARD
   #define LCD_ST7920_DELAY_1           125
   #define LCD_ST7920_DELAY_2           125
   #define LCD_ST7920_DELAY_3           125
 
-#elif ANY(ANET_FULL_GRAPHICS_LCD, CTC_A10S_A13)
+#elif ANY(ANET_FULL_GRAPHICS_LCD, ANET_FULL_GRAPHICS_LCD_ALT_WIRING)
 
   #define IS_RRD_FG_SC 1
   #define LCD_ST7920_DELAY_1           150
@@ -813,10 +779,6 @@
   #define IS_RRD_SC 1
   #define U8GLIB_SSD1309
 
-#endif
-
-#if ANY(FYSETC_MINI_12864, MKS_MINI_12864)
-  #define U8G_SPI_USE_MODE_3 1
 #endif
 
 // ST7920-based graphical displays
@@ -897,11 +859,10 @@
   #endif
 #endif
 
-// FSMC/SPI TFT Panels (LVGL) with encoder click wheel
+// FSMC/SPI TFT Panels (LVGL)
 #if ENABLED(TFT_LVGL_UI)
   #define HAS_TFT_LVGL_UI 1
   #define SERIAL_RUNTIME_HOOK 1
-  #define STD_ENCODER_PULSES_PER_STEP 4
 #endif
 
 // FSMC/SPI TFT Panels
@@ -981,17 +942,6 @@
   #define DETECT_I2C_LCD_DEVICE 1
 #endif
 
-/**
- * Ender-3 V2 DWIN with Encoder
- */
-#if ANY(DWIN_CREALITY_LCD, DWIN_LCD_PROUI)
-  #define HAS_DWIN_E3V2_BASIC 1
-#endif
-#if ANY(HAS_DWIN_E3V2_BASIC, DWIN_CREALITY_LCD_JYERSUI)
-  #define HAS_DWIN_E3V2 1
-  #define STD_ENCODER_PULSES_PER_STEP 4
-#endif
-
 // Encoder behavior
 #ifndef STD_ENCODER_PULSES_PER_STEP
   #if ENABLED(TOUCH_SCREEN)
@@ -1013,12 +963,10 @@
   #define ENCODER_FEEDRATE_DEADZONE 6
 #endif
 
-/**
- * Shift register panels
- * ---------------------
- * 2 wire Non-latching LCD SR from:
- * https://github.com/fmalpartida/New-LiquidCrystal/wiki/schematics#user-content-ShiftRegister_connection
- */
+// Shift register panels
+// ---------------------
+// 2 wire Non-latching LCD SR from:
+// https://github.com/fmalpartida/New-LiquidCrystal/wiki/schematics#user-content-ShiftRegister_connection
 #if ENABLED(FF_INTERFACEBOARD)
   #define SR_LCD_3W_NL    // Non latching 3 wire shift register
   #define IS_ULTIPANEL 1
@@ -1045,17 +993,25 @@
 #endif
 
 // Aliases for LCD features
-#if !DGUS_UI_IS(NONE) || ENABLED(ANYCUBIC_LCD_VYPER)
+#if ANY(DGUS_LCD_UI_ORIGIN, DGUS_LCD_UI_FYSETC, DGUS_LCD_UI_HIPRECY, DGUS_LCD_UI_MKS, DGUS_LCD_UI_RELOADED)
   #define HAS_DGUS_LCD 1
-  #if DGUS_UI_IS(ORIGIN, FYSETC, HIPRECY, MKS)
+  #if DISABLED(DGUS_LCD_UI_RELOADED)
     #define HAS_DGUS_LCD_CLASSIC 1
   #endif
 #endif
 
 // Extensible UI serial touch screens. (See src/lcd/extui)
-#if ANY(HAS_DGUS_LCD, MALYAN_LCD, ANYCUBIC_LCD_I3MEGA, ANYCUBIC_LCD_CHIRON, NEXTION_TFT, TOUCH_UI_FTDI_EVE, DWIN_LCD_PROUI)
+#if ANY(HAS_DGUS_LCD, MALYAN_LCD, ANYCUBIC_LCD_I3MEGA, ANYCUBIC_LCD_CHIRON, NEXTION_TFT, TOUCH_UI_FTDI_EVE)
   #define IS_EXTUI 1 // Just for sanity check.
   #define EXTENSIBLE_UI
+#endif
+
+// Aliases for LCD features
+#if ANY(DWIN_CREALITY_LCD, DWIN_LCD_PROUI)
+  #define HAS_DWIN_E3V2_BASIC 1
+#endif
+#if ANY(HAS_DWIN_E3V2_BASIC, DWIN_CREALITY_LCD_JYERSUI)
+  #define HAS_DWIN_E3V2 1
 #endif
 
 // E3V2 extras
@@ -1068,12 +1024,6 @@
 #if ENABLED(DWIN_LCD_PROUI)
   #define DO_LIST_BIN_FILES 1
   #define LCD_BRIGHTNESS_DEFAULT 127
-  #define STATUS_DO_CLEAR_EMPTY
-#endif
-
-// Serial Controllers require LCD_SERIAL_PORT
-#if ANY(IS_DWIN_MARLINUI, HAS_DWIN_E3V2, HAS_DGUS_LCD, MALYAN_LCD, ANYCUBIC_LCD_I3MEGA, ANYCUBIC_LCD_CHIRON, NEXTION_TFT)
-  #define LCD_IS_SERIAL_HOST 1
 #endif
 
 #if HAS_WIRED_LCD
@@ -1099,17 +1049,12 @@
    *  - poweroff        (for PSU_CONTROL and HAS_MARLINUI_MENU)
    *
    *  ...and implements these MarlinUI methods:
-   *  - zoffset_overlay (if BABYSTEP_GFX_OVERLAY or MESH_EDIT_GFX_OVERLAY are supported)
+   *  - zoffset_overlay (if BABYSTEP_ZPROBE_GFX_OVERLAY or MESH_EDIT_GFX_OVERLAY are supported)
    *  - draw_kill_screen
    *  - kill_screen
    *  - draw_status_message
-   *    (calling advance_status_scroll, status_and_len for a scrolling status message)
    */
   #define HAS_DISPLAY 1
-#endif
-
-#if ANY(HAS_DISPLAY, DWIN_CREALITY_LCD)
-  #define HAS_UI_UPDATE 1
 #endif
 
 #if HAS_WIRED_LCD && !HAS_GRAPHICAL_TFT && !IS_DWIN_MARLINUI
@@ -1152,12 +1097,12 @@
 #endif
 
 // No inactive extruders with SWITCHING_NOZZLE or Průša MMU1 or just 1 E stepper exists
-#if HAS_SWITCHING_NOZZLE || HAS_PRUSA_MMU1 || E_STEPPERS < 2
-  #undef DISABLE_OTHER_EXTRUDERS
+#if ENABLED(SWITCHING_NOZZLE) || HAS_PRUSA_MMU1 || E_STEPPERS < 2
+  #undef DISABLE_INACTIVE_EXTRUDER
 #endif
 
 // Switching extruder has its own servo?
-#if ENABLED(SWITCHING_EXTRUDER) && (!HAS_SWITCHING_NOZZLE || SWITCHING_EXTRUDER_SERVO_NR != SWITCHING_NOZZLE_SERVO_NR)
+#if ENABLED(SWITCHING_EXTRUDER) && (DISABLED(SWITCHING_NOZZLE) || SWITCHING_EXTRUDER_SERVO_NR != SWITCHING_NOZZLE_SERVO_NR)
   #define DO_SWITCH_EXTRUDER 1
 #endif
 
@@ -1185,19 +1130,11 @@
 /**
  * Set flags for any form of bed probe
  */
-#if ANY(TOUCH_MI_PROBE, Z_PROBE_ALLEN_KEY, HAS_Z_SERVO_PROBE, SOLENOID_PROBE, Z_PROBE_SLED, RACK_AND_PINION_PROBE, SENSORLESS_PROBING, MAGLEV4, MAG_MOUNTED_PROBE, BIQU_MICROPROBE_V1, BIQU_MICROPROBE_V2)
+#if ANY(TOUCH_MI_PROBE, Z_PROBE_ALLEN_KEY, HAS_Z_SERVO_PROBE, SOLENOID_PROBE, Z_PROBE_SLED, RACK_AND_PINION_PROBE, SENSORLESS_PROBING, MAGLEV4, MAG_MOUNTED_PROBE)
   #define HAS_STOWABLE_PROBE 1
 #endif
 #if ANY(HAS_STOWABLE_PROBE, FIX_MOUNTED_PROBE, BD_SENSOR, NOZZLE_AS_PROBE)
   #define HAS_BED_PROBE 1
-#endif
-
-// Probing tool change
-#if !HAS_MULTI_EXTRUDER
-  #undef PROBING_TOOL
-#endif
-#if HAS_BED_PROBE && defined(PROBING_TOOL)
-  #define DO_TOOLCHANGE_FOR_PROBING 1
 #endif
 
 /**
@@ -1294,97 +1231,6 @@
   #endif
 #endif // FILAMENT_RUNOUT_SENSOR
 
-#if ENABLED(FILAMENT_SWITCH_AND_MOTION)
-  #if NUM_MOTION_SENSORS >= 1
-    #ifndef FIL_MOTION1_STATE
-      #define FIL_MOTION1_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION1_PULLUP
-      #define FIL_MOTION1_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION1_PULLDOWN
-      #define FIL_MOTION1_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 2
-    #ifndef FIL_MOTION2_STATE
-      #define FIL_MOTION2_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION2_PULLUP
-      #define FIL_MOTION2_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION2_PULLDOWN
-      #define FIL_MOTION2_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 3
-    #ifndef FIL_MOTION3_STATE
-      #define FIL_MOTION3_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION3_PULLUP
-      #define FIL_MOTION3_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION3_PULLDOWN
-      #define FIL_MOTION3_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 4
-    #ifndef FIL_MOTION4_STATE
-      #define FIL_MOTION4_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION4_PULLUP
-      #define FIL_MOTION4_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION4_PULLDOWN
-      #define FIL_MOTION4_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 5
-    #ifndef FIL_MOTION5_STATE
-      #define FIL_MOTION5_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION5_PULLUP
-      #define FIL_MOTION5_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION5_PULLDOWN
-      #define FIL_MOTION5_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 6
-    #ifndef FIL_MOTION6_STATE
-      #define FIL_MOTION6_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION6_PULLUP
-      #define FIL_MOTION6_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION6_PULLDOWN
-      #define FIL_MOTION6_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 7
-    #ifndef FIL_MOTION7_STATE
-      #define FIL_MOTION7_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION7_PULLUP
-      #define FIL_MOTION7_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION7_PULLDOWN
-      #define FIL_MOTION7_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-  #if NUM_MOTION_SENSORS >= 8
-    #ifndef FIL_MOTION8_STATE
-      #define FIL_MOTION8_STATE FIL_RUNOUT_STATE
-    #endif
-    #ifndef FIL_MOTION8_PULLUP
-      #define FIL_MOTION8_PULLUP FIL_RUNOUT_PULLUP
-    #endif
-    #ifndef FIL_MOTION8_PULLDOWN
-      #define FILMOTION8_PULLDOWN FIL_RUNOUT_PULLDOWN
-    #endif
-  #endif
-#endif // FILAMENT_SWITCH_AND_MOTION
-
 // Homing to Min or Max
 #if HAS_X_AXIS
   #if X_HOME_DIR > 0
@@ -1456,13 +1302,11 @@
 #if HAS_BED_PROBE
   #if ALL(DELTA, SENSORLESS_PROBING)
     #define HAS_DELTA_SENSORLESS_PROBING 1
-  #else
-    #define HAS_REAL_BED_PROBE 1
   #endif
-  #if HAS_REAL_BED_PROBE && NONE(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, Z_SPI_SENSORLESS)
-    #define NEED_Z_MIN_PROBE_PIN 1
+  #if NONE(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, HAS_DELTA_SENSORLESS_PROBING)
+    #define USES_Z_MIN_PROBE_PIN 1
   #endif
-  #if Z_HOME_TO_MIN && (!NEED_Z_MIN_PROBE_PIN || ENABLED(USE_PROBE_FOR_Z_HOMING))
+  #if Z_HOME_TO_MIN && (DISABLED(USES_Z_MIN_PROBE_PIN) || ENABLED(USE_PROBE_FOR_Z_HOMING))
     #define HOMING_Z_WITH_PROBE 1
   #endif
   #if DISABLED(NOZZLE_AS_PROBE)
@@ -1476,9 +1320,6 @@
   #endif
   #ifndef Z_CLEARANCE_MULTI_PROBE
     #define Z_CLEARANCE_MULTI_PROBE 5
-  #endif
-  #ifndef Z_PROBE_ERROR_TOLERANCE
-    #define Z_PROBE_ERROR_TOLERANCE Z_CLEARANCE_MULTI_PROBE
   #endif
   #if MULTIPLE_PROBING > 1
     #if EXTRA_PROBING > 0
@@ -1494,7 +1335,6 @@
   #undef Z_MIN_PROBE_REPEATABILITY_TEST
   #undef HOMING_Z_WITH_PROBE
   #undef Z_CLEARANCE_MULTI_PROBE
-  #undef Z_PROBE_ERROR_TOLERANCE
   #undef MULTIPLE_PROBING
   #undef EXTRA_PROBING
   #undef PROBE_OFFSET_ZMIN
@@ -1585,14 +1425,6 @@
   #define BOOT_MARLIN_LOGO_SMALL
 #endif
 
-// Flow and feedrate editing
-#if HAS_EXTRUDERS && ANY(HAS_MARLINUI_MENU, DWIN_CREALITY_LCD, DWIN_LCD_PROUI, MALYAN_LCD, TOUCH_SCREEN)
-  #define HAS_FLOW_EDIT 1
-#endif
-#if ANY(HAS_MARLINUI_MENU, ULTIPANEL_FEEDMULTIPLY, DWIN_CREALITY_LCD, DWIN_LCD_PROUI, MALYAN_LCD, TOUCH_SCREEN)
-  #define HAS_FEEDRATE_EDIT 1
-#endif
-
 /**
  * CoreXY, CoreXZ, and CoreYZ - and their reverse
  */
@@ -1607,6 +1439,8 @@
 #endif
 #if CORE_IS_XY || CORE_IS_XZ || CORE_IS_YZ
   #define IS_CORE 1
+#endif
+#if IS_CORE
   #if CORE_IS_XY
     #define CORE_AXIS_1 A_AXIS
     #define CORE_AXIS_2 B_AXIS
@@ -1631,7 +1465,7 @@
 #if ANY(MORGAN_SCARA, MP_SCARA, AXEL_TPARA)
   #define IS_SCARA 1
   #define IS_KINEMATIC 1
-#elif ANY(DELTA, POLARGRAPH, POLAR)
+#elif ANY(DELTA, POLARGRAPH)
   #define IS_KINEMATIC 1
 #else
   #define IS_CARTESIAN 1
@@ -1679,10 +1513,6 @@
   #define HAS_PID_DEBUG 1
 #endif
 
-#if DISABLED(MPC_AUTOTUNE)
-  #undef MPC_AUTOTUNE_MENU
-#endif
-
 /**
  * TFT Displays
  *
@@ -1700,7 +1530,6 @@
   #define TFT_DEFAULT_ORIENTATION TFT_EXCHANGE_XY
   #define TFT_RES_480x320
   #define TFT_INTERFACE_SPI
-  #define NO_LCD_SDCARD
 #elif ANY(LERDGE_TFT35, ANET_ET5_TFT35)                                       // ST7796
   #define TFT_DEFAULT_ORIENTATION TFT_EXCHANGE_XY
   #define TFT_RES_480x320
@@ -1839,29 +1668,23 @@
 #elif ANY(TFT_1024x600_LTDC, TFT_1024x600_SIM)
   #define HAS_UI_1024x600 1
 #endif
-
-// Number of text lines the screen can display (may depend on font used)
-// Touch screens leave space for extra buttons at the bottom
-#if ANY(HAS_UI_320x240, HAS_UI_480x272)
-  #if ENABLED(TFT_COLOR_UI_PORTRAIT)
-    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 8, 9)
-  #else
-    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 6, 7)
-  #endif
-#elif HAS_UI_480x320
-  #if ENABLED(TFT_COLOR_UI_PORTRAIT)
-    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 9, 10)
-  #else
-    #define LCD_HEIGHT TERN(TOUCH_SCREEN, 6, 7)
-  #endif
+#if ANY(HAS_UI_320x240, HAS_UI_480x320, HAS_UI_480x272)
+  #define LCD_HEIGHT TERN(TOUCH_SCREEN, 6, 7)   // Fewer lines with touch buttons onscreen
 #elif HAS_UI_1024x600
-  #define LCD_HEIGHT TERN(TOUCH_SCREEN, 12, 13)
+  #define LCD_HEIGHT TERN(TOUCH_SCREEN, 12, 13) // Fewer lines with touch buttons onscreen
 #endif
 
 // This emulated DOGM has 'touch/xpt2046', not 'tft/xpt2046'
 #if ENABLED(TOUCH_SCREEN)
+  #if TOUCH_IDLE_SLEEP_MINS
+    #define HAS_TOUCH_SLEEP 1
+  #endif
   #if NONE(TFT_TOUCH_DEVICE_GT911, TFT_TOUCH_DEVICE_XPT2046)
     #define TFT_TOUCH_DEVICE_XPT2046          // ADS7843/XPT2046 ADC Touchscreen such as ILI9341 2.8
+  #endif
+  #if ENABLED(TFT_TOUCH_DEVICE_GT911)         // GT911 Capacitive touch screen such as BIQU_BX_TFT70
+    #undef TOUCH_SCREEN_CALIBRATION
+    #undef TOUCH_CALIBRATION_AUTO_SAVE
   #endif
   #if !HAS_GRAPHICAL_TFT
     #undef TOUCH_SCREEN

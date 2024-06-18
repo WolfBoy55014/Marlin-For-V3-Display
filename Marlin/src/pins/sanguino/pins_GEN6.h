@@ -23,7 +23,8 @@
 
 /**
  * Gen6 pin assignments
- * Schematic: https://reprap.org/mediawiki/images/0/0f/GEN6_Mendel_Circuit.pdf
+ * Schematic: https://green-candy.osdn.jp/external/MarlinFW/board_schematics/Gen6/GEN6_Mendel_Circuit.pdf
+ * Origin: https://reprap.org/mediawiki/images/0/0f/GEN6_Mendel_Circuit.pdf
  */
 
  /**
@@ -35,7 +36,7 @@
  */
 
 /**
- * A useable Arduino IDE extension (Boards Manager) can be found at
+ * A useable Arduino IDE extension (board manager) can be found at
  * https://github.com/Lauszus/Sanguino
  *
  * This extension has been tested on Arduino 1.6.12 & 1.8.0
