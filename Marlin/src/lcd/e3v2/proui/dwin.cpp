@@ -1143,7 +1143,6 @@ void Draw_Info_Menu() {
 
 // Main Process
 void HMI_MainMenu() {
-  // DWINUI::Draw_Round_Box(RGB(3, 8, 4), frame_rect_t { 17, 110, 238, 216 }, 7);
   EncoderState encoder_diffState = get_encoder_state();
   if (encoder_diffState == ENCODER_DIFF_NO) return;
 

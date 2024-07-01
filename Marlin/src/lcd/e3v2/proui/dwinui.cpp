@@ -273,26 +273,6 @@ void DWINUI::Draw_FillCircle(uint16_t bcolor, uint16_t x,uint16_t y,uint8_t r) {
   }
 }
 
-void Draw_Round_Box(uint16_t color, frame_rect_t frame, uint16_t r) {
-    frame_rect_t inner_rect = { frame.x - r, frame.y - r, frame.w - r, frame.h - r };
-
-    // Draw Corner Circles
-    DWINUI::Draw_FillCircle(color, inner_rect.x, inner_rect.y, r);
-    DWINUI::Draw_FillCircle(color, inner_rect.x + inner_rect.w, inner_rect.y, r);
-    DWINUI::Draw_FillCircle(color, inner_rect.x, inner_rect.y + inner_rect.h, r);
-    DWINUI::Draw_FillCircle(color, inner_rect.x + inner_rect.w, inner_rect.y + inner_rect.h, r);
-
-    // Draw Central Rectangle
-    DWIN_Draw_Box(1, color, inner_rect.x, inner_rect.y, inner_rect.w, inner_rect.h);
-
-    // Draw Edge Rectangles
-    DWIN_Draw_Box(1, color, inner_rect.x, inner_rect.y - r, inner_rect.w, r);
-    DWIN_Draw_Box(1, color, inner_rect.x, inner_rect.y + inner_rect.h, inner_rect.w, r);
-    DWIN_Draw_Box(1, color, inner_rect.x - r, inner_rect.y, r, inner_rect.h);
-    DWIN_Draw_Box(1, color, inner_rect.x + inner_rect.w, inner_rect.y, r, inner_rect.h);
-
-  }
-
 // Color Interpolator
 //  val : Interpolator minv..maxv
 //  minv : Minimum value

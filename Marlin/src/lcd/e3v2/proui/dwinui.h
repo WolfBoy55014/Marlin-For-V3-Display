@@ -523,10 +523,6 @@ namespace DWINUI {
     DWIN_Draw_Box(mode, color, frame.x, frame.y, frame.w, frame.h);
   }
 
-  inline void Draw_Round_Box(uint16_t color, frame_rect_t frame, uint16_t r) {
-    Draw_Round_Box(color, frame, r);
-  }
-
   // Draw a line
   //  color: Line color
   //  x1/y1: Starting point
